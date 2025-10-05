@@ -4,42 +4,9 @@ from exported import WOZ_REQUIREMENTS
 
 
 def _load_api_key():
-    """Load OpenRouter / OpenAI API key securely.
-
-    Priority:
-      1. OPENROUTER_API_KEY (plain text) environment variable
-      2. OPENROUTER_API_KEY_B64 (base64-encoded) environment variable
-      3. .env file (requires python-dotenv) - same variable names as above
-
-    Raises RuntimeError if key not found.
-    """
-
-    key = os.getenv("OPENROUTER_API_KEY")
-    if key:
-        return key.strip()
-
-    key_b64 = os.getenv("OPENROUTER_API_KEY_B64")
-    if key_b64:
-        try:
-            return base64.b64decode(key_b64).decode("utf-8").strip()
-        except Exception:
-            pass
-
-    try:
-        from dotenv import load_dotenv
-        load_dotenv()
-        key = os.getenv("OPENROUTER_API_KEY")
-        if key:
-            return key.strip()
-        key_b64 = os.getenv("OPENROUTER_API_KEY_B64")
-        if key_b64:
-            return base64.b64decode(key_b64).decode("utf-8").strip()
-    except Exception:
-        pass
-
-    raise RuntimeError(
-        "API key not found. Set OPENROUTER_API_KEY (plain) or OPENROUTER_API_KEY_B64 (base64) as environment variable."
-    )
+    from dotenv import load_dotenv
+    load_dotenv()
+    return os.getenv("OPENROUTER_API_KEY")
 
 
 API_KEY = _load_api_key()

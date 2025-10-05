@@ -1,12 +1,13 @@
 import sys
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout,
-    QFileDialog, QFrame, QStackedWidget, QScrollArea, QGraphicsEffect,
+    QFileDialog, QFrame, QStackedWidget, QScrollArea, QGraphicsOpacityEffect,
     QGraphicsDropShadowEffect
 )
 from PySide6.QtGui import QPixmap, QIcon, QColor, QFont
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve
 from service import Processor
+from history_utils import save_history_entry, load_history
 
 IMAGE_PROCESSOR = Processor()
 
@@ -55,6 +56,7 @@ COMPARISON_LABELS = {
 class ImagePreview(QFrame):
     def __init__(self, file_path, remove_callback):
         super().__init__()
+        self.file_path = file_path
         self.remove_callback = remove_callback
 
         self.setFixedSize(160, 170)
@@ -343,8 +345,15 @@ class MainWindow(QWidget):
         self.analysis_layout.addWidget(self.analysis_title)
         self.analysis_title.show()
 
-        IMAGE_PROCESSOR.initialize_images(image_paths) 
+        IMAGE_PROCESSOR.initialize_images(image_paths)
         analysis_data = IMAGE_PROCESSOR.turn_to_llm()
+
+        # save to persistent history
+        try:
+            saved = save_history_entry(analysis_data, image_paths)
+            print('Saved history entry', saved.get('id'))
+        except Exception as e:
+            print('Failed to save history:', e)
 
         self.render_analysis(analysis_data)
     
@@ -503,21 +512,77 @@ class MainWindow(QWidget):
         scroll_layout.setSpacing(15)
         scroll_layout.setAlignment(Qt.AlignTop)
 
-        # Пример карточек истории
-        for i in range(5):
-            card = QFrame()
-            card.setStyleSheet(f"background-color: {STYLES['card_bg']}; border-radius: 15px; padding: 20px;")
-            lbl = QLabel(f"Продукт {i+1} - Анализ от 03.10.2025")
-            lbl.setStyleSheet(f"font-size: 18px; color: {STYLES['text']}; background: transparent;")
-            
-            desc = QLabel("Категория: Пюре | Рейтинг: ⭐️⭐️⭐️⭐️☆")
-            desc.setStyleSheet(f"font-size: 14px; color: {STYLES['text']}; background: transparent;")
+        # Load real history
+        entries = load_history()
+        if not entries:
+            empty = QLabel("Тут пока нет сохранённых анализов")
+            empty.setStyleSheet(f"color: {STYLES['text']}; font-size: 16px;")
+            scroll_layout.addWidget(empty)
+        else:
+            for entry in entries:
+                card = QFrame()
+                card.setStyleSheet(f"background-color: {STYLES['card_bg']}; border-radius: 15px; padding: 12px;")
+                hdr = QLabel(f"{entry.get('name','N/A')} — {entry.get('category','N/A')}")
+                hdr.setStyleSheet(f"font-size: 16px; color: {STYLES['text']}; font-weight: bold;")
 
-            card_layout = QVBoxLayout(card)
-            card_layout.addWidget(lbl)
-            card_layout.addWidget(desc)
-            apply_shadow(card)
-            scroll_layout.addWidget(card)
+                ts = QLabel(f"{entry.get('timestamp')}")
+                ts.setStyleSheet(f"font-size: 12px; color: {STYLES['text']}; opacity: 0.8;")
+
+                images_layout = QHBoxLayout()
+                for img_rel in entry.get('images', []):
+                    img_path = img_rel
+                    thumb = QLabel()
+                    try:
+                        pix = QPixmap(img_path).scaled(100, 80, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                        thumb.setPixmap(pix)
+                    except Exception:
+                        thumb.setText('📷')
+                    images_layout.addWidget(thumb)
+
+                # delete button
+                del_btn = QPushButton('Удалить')
+                del_btn.setStyleSheet(f"background-color: {STYLES['danger']}; color: white; border-radius: 8px; padding: 6px;")
+                del_btn.setCursor(Qt.PointingHandCursor)
+                # closure capture
+                def make_handler(eid):
+                    def handler():
+                        from history_utils import delete_history_entry
+                        from PySide6.QtWidgets import QMessageBox
+                        mb = QMessageBox()
+                        mb.setIcon(QMessageBox.Warning)
+                        mb.setWindowTitle('Подтвердите')
+                        mb.setText('Удалить запись истории?')
+                        mb.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+                        res = mb.exec()
+                        if res == QMessageBox.Yes:
+                            ok = delete_history_entry(eid)
+                            if ok:
+                                # refresh history screen
+                                try:
+                                    new_history = self.create_history_screen()
+                                    idx = self.stack.indexOf(self.history_screen)
+                                    if idx != -1:
+                                        self.stack.removeWidget(self.history_screen)
+                                    self.history_screen = new_history
+                                    self.stack.addWidget(self.history_screen)
+                                    self.animate_transition(self.history_screen)
+                                except Exception as ex:
+                                    print('Failed to refresh history after delete:', ex)
+                    return handler
+
+                del_btn.clicked.connect(make_handler(entry.get('id')))
+
+                card_layout = QVBoxLayout(card)
+                top_row = QHBoxLayout()
+                top_row.addWidget(hdr)
+                top_row.addStretch()
+                top_row.addWidget(del_btn)
+
+                card_layout.addLayout(top_row)
+                card_layout.addWidget(ts)
+                card_layout.addLayout(images_layout)
+                apply_shadow(card)
+                scroll_layout.addWidget(card)
 
         scroll.setWidget(scroll_content)
         layout.addWidget(scroll)
@@ -529,22 +594,37 @@ class MainWindow(QWidget):
             self.upload_widget.add_image(file)
 
     def show_history(self):
-        self.animate_transition(self.history_screen)
+        # Recreate history screen to reflect latest saved entries
+        try:
+            new_history = self.create_history_screen()
+            # replace widget in stack
+            idx = self.stack.indexOf(self.history_screen)
+            if idx != -1:
+                self.stack.removeWidget(self.history_screen)
+            self.history_screen = new_history
+            self.stack.addWidget(self.history_screen)
+            self.animate_transition(self.history_screen)
+        except Exception as e:
+            print('Failed to open history:', e)
 
     def show_main(self):
         self.animate_transition(self.stack.widget(0))
 
     def animate_transition(self, widget):
         self.stack.setCurrentWidget(widget)
-        opacity_effect = QGraphicsEffect(widget)
+        # use QGraphicsOpacityEffect (QGraphicsEffect is abstract and cannot be instantiated)
+        opacity_effect = QGraphicsOpacityEffect()
+        opacity_effect.setOpacity(0.0)
         widget.setGraphicsEffect(opacity_effect)
-        
+
         anim = QPropertyAnimation(opacity_effect, b"opacity")
         anim.setDuration(300)
-        anim.setStartValue(0)
-        anim.setEndValue(1)
+        anim.setStartValue(0.0)
+        anim.setEndValue(1.0)
         anim.setEasingCurve(QEasingCurve.InOutCubic)
-        anim.start(QPropertyAnimation.DeleteWhenStopped)
+        # keep reference to animation so it isn't GC'd
+        widget._opacity_anim = anim
+        anim.start()
 
 
 if __name__ == '__main__':
