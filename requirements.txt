@@ -1,0 +1,4 @@
+openai
+pyside6
+nuitka
+dotenv

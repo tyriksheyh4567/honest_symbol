@@ -1,0 +1,11 @@
+.env
+.venv/
+.pycache/
+.ipynb_checkpoints
+__pycache__
+Include/
+Lib/
+Scripts/
+pyvenv.cfg
+.DS_Store
+.env.keys
