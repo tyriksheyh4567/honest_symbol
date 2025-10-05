@@ -48,3 +48,5 @@ jobs:
             build/*.app/**/*
             build/*.dist/**/*
           include-hidden-files: true
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}

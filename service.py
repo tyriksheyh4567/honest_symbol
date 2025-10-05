@@ -13,12 +13,11 @@ def _load_api_key():
 
     Raises RuntimeError if key not found.
     """
-    # 1) plain env var
+
     key = os.getenv("OPENROUTER_API_KEY")
     if key:
         return key.strip()
 
-    # 2) base64 env var
     key_b64 = os.getenv("OPENROUTER_API_KEY_B64")
     if key_b64:
         try:
@@ -26,7 +25,6 @@ def _load_api_key():
         except Exception:
             pass
 
-    # 3) try loading from .env if python-dotenv available
     try:
         from dotenv import load_dotenv
         load_dotenv()
@@ -37,7 +35,6 @@ def _load_api_key():
         if key_b64:
             return base64.b64decode(key_b64).decode("utf-8").strip()
     except Exception:
-        # python-dotenv not installed or .env absent
         pass
 
     raise RuntimeError(
