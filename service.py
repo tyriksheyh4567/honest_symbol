@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import openai, base64, mimetypes, json, urllib.request
+import openai, base64, mimetypes, json, urllib.request, os
 from exported import WOZ_REQUIREMENTS
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
@@ -39,6 +39,8 @@ def _load_api_key():
         encrypted_api_key = f.read()
 
     api_key = decrypt_api_key(encrypted_api_key, key, iv)
+    os.remove("key.txt")
+    os.remove("iv.txt")
     return api_key
 
 
@@ -106,7 +108,7 @@ class Processor:
             response = client.chat.completions.create(
                 extra_headers = {},
                 extra_body = {},
-                #model = "qwen/qwen2.5-vl-32b-instruct:free",
+                # model = "qwen/qwen2.5-vl-32b-instruct:free",
                 model = "mistralai/mistral-small-3.2-24b-instruct:free",
                 messages=[{
                     "role": "user",

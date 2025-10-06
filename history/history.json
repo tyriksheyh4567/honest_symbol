@@ -1,1 +1,48 @@
-[]
+[
+  {
+    "id": "8f2436e7-3036-4924-b848-4dda75b5ccb8",
+    "timestamp": "2025-10-06T16:00:15.852803Z",
+    "name": "Nestlé Детская каша Рисовая каша Молочная",
+    "category": "молочные_продукты",
+    "summary": {
+      "energy_value": "N/A",
+      "total_sugar": "N/A"
+    },
+    "analysis": {
+      "name": "Nestlé Детская каша Рисовая каша Молочная",
+      "category": "молочные_продукты",
+      "characteristics": {
+        "energy_value": "N/A",
+        "sodium": "N/A",
+        "total_sugar": "N/A",
+        "free_sugar": "N/A",
+        "total_protein": "N/A",
+        "total_fat": "N/A",
+        "fruit_content": "N/A",
+        "age_marking": "1+",
+        "high_sugar_front_packaging": "false",
+        "labeling": "true"
+      },
+      "additional_info": {
+        "containings": "N/A",
+        "description": "N/A",
+        "manufactuer_address": "N/A",
+        "storing_conditions": "N/A"
+      },
+      "comparison": {
+        "energy_value": "NaN",
+        "sodium": "NaN",
+        "total_sugar": "NaN",
+        "added_sweetener": "true",
+        "total_fat": "NaN",
+        "trans_fats": "NaN",
+        "fruit_content": "NaN",
+        "best_before_date": "NaN",
+        "high_sugar_indication": "NaN"
+      }
+    },
+    "images": [
+      "history\\images\\8f2436e7-3036-4924-b848-4dda75b5ccb8_0.png"
+    ]
+  }
+]
