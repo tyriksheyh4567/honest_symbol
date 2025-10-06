@@ -628,7 +628,7 @@ class MainWindow(QWidget):
 
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
+    app = QApplication([])
     app.setFont(QFont(STYLES["font_family"], 9))
     window = MainWindow()
     window.show()

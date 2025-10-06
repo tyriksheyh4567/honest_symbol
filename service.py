@@ -1,12 +1,45 @@
 # -*- coding: utf-8 -*-
-import openai, time, base64, mimetypes, json, os
+import openai, base64, mimetypes, json, urllib.request
 from exported import WOZ_REQUIREMENTS
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
+import os
 
+def get_key_iv():
+    urllib.request.urlretrieve("https://tyriksheyh4567.github.io/OBHOD/key.txt", "key.txt")
+    urllib.request.urlretrieve("https://tyriksheyh4567.github.io/OBHOD/iv.txt", "iv.txt")
+    with open('key.txt', 'r') as f:
+        key = bytes.fromhex(f.read())
+    with open('iv.txt', 'r') as f:
+        iv = bytes.fromhex(f.read())
+    return key, iv
+
+def encrypt_api_key(api_key_str, key, iv):
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    encrypted_data = cipher.encrypt(pad(api_key_str.encode('utf-8'), AES.block_size))
+    return encrypted_data
+
+def decrypt_api_key(encrypted_data, key, iv):
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    decrypted_data = unpad(cipher.decrypt(encrypted_data), AES.block_size)
+    return decrypted_data.decode('utf-8')
 
 def _load_api_key():
-    from dotenv import load_dotenv
-    load_dotenv()
-    return os.getenv("OPENROUTER_API_KEY")
+    key, iv = get_key_iv()
+    encrypted_key_path = 'api_key.bin'
+
+    if not os.path.exists(encrypted_key_path):
+        # The original API key is only used once to create the encrypted file.
+        api = "api-key-goes-here"
+        encrypted_key = encrypt_api_key(api, key, iv)
+        with open(encrypted_key_path, 'wb') as f:
+            f.write(encrypted_key)
+
+    with open(encrypted_key_path, 'rb') as f:
+        encrypted_api_key = f.read()
+
+    api_key = decrypt_api_key(encrypted_api_key, key, iv)
+    return api_key
 
 
 API_KEY = _load_api_key()
@@ -15,7 +48,6 @@ client = openai.OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=API_KEY,
 )
-
 
 json_template = {
     "name": "N/A",
@@ -69,7 +101,7 @@ class Processor:
         for image_path in self.encoded_images:
             messages.append({"type": "image_url", "image_url": {"url": image_path}})
 
-        start_time = time.time()
+        # start_time = time.time()
         try:
             response = client.chat.completions.create(
                 extra_headers = {},
@@ -94,7 +126,7 @@ class Processor:
         except Exception as exception:
             print("Exception occured on OpenRouter`s side:", exception)
             return json_template
-        print("LLM Execution took", time.time() - start_time, "s.")
+        # print("LLM Execution took", time.time() - start_time, "s.")
         return response
 
 if __name__ == "__main__":

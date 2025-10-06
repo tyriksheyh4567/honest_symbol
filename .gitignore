@@ -1,4 +1,3 @@
-.env
 .venv/
 .pycache/
 .ipynb_checkpoints
@@ -8,4 +7,8 @@ Lib/
 Scripts/
 pyvenv.cfg
 .DS_Store
-.env.keys
+.env.*
+.env
+!.env.example
+key.txt
+iv.txt
