@@ -36,7 +36,7 @@ jobs:
           windows-icon-from-ico: ./favicon.ico
           linux-icon: ./favicon.ico
           output-file: chestnyi-znak
-          include-data-dir: ./data=
+          include-data-dir: ./data=data
           macos-app-icon: ./favicon.ico
           macos-signed-app-name: ru.yarosheyh.ChestnyiZnak
           onefile-windows-splash-screen-image: ./splash.bmp
