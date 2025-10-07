@@ -26,7 +26,7 @@ def decrypt_api_key(encrypted_data, key, iv):
 
 def _load_api_key():
     key, iv = get_key_iv()
-    encrypted_key_path = 'api_key.bin'
+    encrypted_key_path = './data/api_key.bin'
 
     if not os.path.exists(encrypted_key_path):
         # The original API key is only used once to create the encrypted file.
