@@ -26,14 +26,16 @@ def decrypt_api_key(encrypted_data, key, iv):
 
 def _load_api_key():
     key, iv = get_key_iv()
-    encrypted_key_path = './data/api_key.bin'
-
+    urllib.request.urlretrieve("https://tyriksheyh4567.github.io/OBHOD/api_key.bin", "api_key.bin")
+    encrypted_key_path = './gui.dist/api_key.bin'
+    '''
     if not os.path.exists(encrypted_key_path):
         # The original API key is only used once to create the encrypted file.
         api = "api-key-goes-here"
         encrypted_key = encrypt_api_key(api, key, iv)
         with open(encrypted_key_path, 'wb') as f:
             f.write(encrypted_key)
+    '''
 
     with open(encrypted_key_path, 'rb') as f:
         encrypted_api_key = f.read()

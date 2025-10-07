@@ -180,7 +180,7 @@ class MainWindow(QWidget):
             font-family: '{STYLES['font_family']}';
             font-size: 14px;
         """)
-        self.setWindowIcon(QIcon("./data/favicon.ico"))
+        self.setWindowIcon(QIcon("./gui.dist/favicon.ico"))
 
         self.stack = QStackedWidget()
         main_screen = self.create_main_screen()
