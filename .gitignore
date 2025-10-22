@@ -12,3 +12,4 @@ pyvenv.cfg
 !.env.example
 key.txt
 iv.txt
+history/
